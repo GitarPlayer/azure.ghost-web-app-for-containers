@@ -7,7 +7,7 @@ param applicationNamePrefix string = 'ghost'
 param appServicePlanSku string = 'B1'
 
 @description('Log Analytics workspace pricing tier')
-param logAnalyticsWorkspaceSku string = 'Pay-as-you-go'
+param logAnalyticsWorkspaceSku string = 'PerGB2018'
 
 @description('Storage account pricing tier')
 param storageAccountSku string = 'Standard_LRS'
