@@ -5,8 +5,8 @@ targetScope = 'resourceGroup'
 param mySQLServerName string
 
 @allowed([
-  'B_Gen5_1'
-  'B_Gen5_2'
+  'Standard_B16ms'
+  'Standard_D2ds_v4'
 ])
 param mySQLServerSku string
 
@@ -48,11 +48,11 @@ resource mySQLServer 'Microsoft.DBforMySQL/flexibleServers@2021-05-01' = {
   location: location
   sku: {
     name: mySQLServerSku
-    tier: 'Basic'
+    tier: 'GeneralPurpose'
   }
   properties: {
     createMode: 'Default'
-    version: '8.0'
+    version: '5.7'
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorPassword
     backup: {

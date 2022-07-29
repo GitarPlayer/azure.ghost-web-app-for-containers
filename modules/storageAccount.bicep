@@ -8,6 +8,7 @@ param storageAccountName string
   'Standard_LRS'
   'Standard_GRS'
   'Standard_ZRS'
+  'Standard_RAGRS'
 ])
 param storageAccountSku string
 
@@ -20,10 +21,10 @@ param location string = resourceGroup().location
 @description('Log Analytics workspace id to use for diagnostics settings')
 param logAnalyticsWorkspaceId string
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   name: storageAccountName
   location: location
-  kind: 'FileStorage'
+  kind: 'StorageV2'
   sku: {
     name: storageAccountSku
   }

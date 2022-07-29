@@ -133,8 +133,7 @@ module webAppSettings 'modules/webAppSettings.bicep' = {
     containerRegistryUrl: containerRegistryUrl
     containerMountPath: ghostContentFilesMountPath
     databaseHostFQDN: mySQLServer.outputs.fullyQualifiedDomainName
-    // databaseLogin: '${databaseLogin}@${mySQLServer.outputs.name}'
-    databaseLogin: databaseLogin
+    databaseLogin: '${databaseLogin}@${mySQLServer.outputs.name}'
     databasePasswordSecretUri: keyVault.outputs.databasePasswordSecretUri
     databaseName: databaseName
     siteUrl: siteUrl

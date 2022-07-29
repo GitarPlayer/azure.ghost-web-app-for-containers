@@ -31,6 +31,9 @@
       },
       "deploymentConfiguration": {
         "value": "Web app with Azure Front Door"
+      },
+        "databasePassword": {
+            "value": "myStr0ngp@sSw0rD7"
       }
     }
 }
