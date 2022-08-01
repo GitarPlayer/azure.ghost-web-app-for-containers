@@ -4,6 +4,11 @@ targetScope = 'resourceGroup'
 @minLength(4)
 @maxLength(64)
 param logAnalyticsWorkspaceName string
+var solutionName = 'SecurityInsights(${logAnalyticsWorkspace.name})'
+
+@minValue(30)
+@maxValue(730)
+param retentionInDays int = 90
 
 @description('Log Analytics workspace pricing tier')
 @allowed([
@@ -27,6 +32,21 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06
     sku: {
       name: logAnalyticsWorkspaceSku
     }
+    retentionInDays: retentionInDays
+  }
+}
+
+resource sentinelSolution 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = {
+  name: solutionName
+  location: location
+  properties: {
+    workspaceResourceId: logAnalyticsWorkspace.id
+  }
+  plan: {
+    name: solutionName
+    publisher: 'Microsoft'
+    product: 'OMSGallery/SecurityInsights'
+    promotionCode: ''
   }
 }
 

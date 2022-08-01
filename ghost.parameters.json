@@ -31,6 +31,9 @@
       },
       "deploymentConfiguration": {
         "value": "Web app with Azure Front Door"
+      },
+      "retentionInDays": {
+        "value": 90
       }
     }
 }

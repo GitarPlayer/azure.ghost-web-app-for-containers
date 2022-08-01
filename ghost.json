@@ -97,7 +97,8 @@
       "defaultValue": "Web app with Azure Front Door",
       "allowedValues": [
         "Web app with Azure CDN",
-        "Web app with Azure Front Door"
+        "Web app with Azure Front Door",
+        "Dev"
       ]
     }
   },
