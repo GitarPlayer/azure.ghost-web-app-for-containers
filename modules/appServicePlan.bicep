@@ -25,12 +25,13 @@ param location string = resourceGroup().location
 @description('Log Analytics workspace id to use for diagnostics settings')
 param logAnalyticsWorkspaceId string
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2021-01-15' = {
+resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   name: appServicePlanName
   location: location
   kind: 'linux'
   properties: {
     reserved: true
+    zoneRedundant: true
   }
   sku: {
     name: appServicePlanSku

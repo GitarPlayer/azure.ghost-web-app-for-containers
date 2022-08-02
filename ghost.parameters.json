@@ -2,6 +2,9 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+      "pkgURL": {
+        "value": "https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip"
+      },
       "storageAccountSku": {
         "value": "Standard_RAGRS"
       },
@@ -9,7 +12,7 @@
         "value": "ghost"
       },
       "appServicePlanSku": {
-        "value": "B1"
+        "value": "P3v2"
       },
       "logAnalyticsWorkspaceSku": {
         "value": "PerGB2018"
@@ -34,6 +37,9 @@
       },
       "retentionInDays": {
         "value": 90
+      },
+      "ghostApiVersion": {
+        "value": "v4.0"
       }
     }
 }

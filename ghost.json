@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.8.9.13224",
-      "templateHash": "723981025382806682"
+      "templateHash": "7867372413457379701"
     }
   },
   "parameters": {
@@ -97,13 +97,35 @@
       "defaultValue": "Web app with Azure Front Door",
       "allowedValues": [
         "Web app with Azure CDN",
-        "Web app with Azure Front Door",
-        "Dev"
+        "Web app with Azure Front Door"
+      ]
+    },
+    "retentionInDays": {
+      "type": "int",
+      "defaultValue": 90,
+      "maxValue": 730,
+      "minValue": 30
+    },
+    "SiteRedundancyMode": {
+      "type": "string",
+      "metadata": {
+        "description": "Site redundancy mode"
+      }
+    },
+    "ghostApiVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "The ghost API version used for the azure function"
+      },
+      "allowedValues": [
+        "v4.0",
+        "v5.0"
       ]
     }
   },
   "variables": {
     "webAppName": "[format('{0}-web-{1}', parameters('applicationNamePrefix'), uniqueString(resourceGroup().id))]",
+    "functioName": "[format('{0}-web-{1}', parameters('applicationNamePrefix'), uniqueString(resourceGroup().id))]",
     "appServicePlanName": "[format('{0}-asp-{1}', parameters('applicationNamePrefix'), uniqueString(resourceGroup().id))]",
     "logAnalyticsWorkspaceName": "[format('{0}-la-{1}', parameters('applicationNamePrefix'), uniqueString(resourceGroup().id))]",
     "applicationInsightsName": "[format('{0}-ai-{1}', parameters('applicationNamePrefix'), uniqueString(resourceGroup().id))]",
@@ -142,6 +164,9 @@
           },
           "location": {
             "value": "[parameters('location')]"
+          },
+          "retentionInDays": {
+            "value": "[parameters('retentionInDays')]"
           }
         },
         "template": {
@@ -151,7 +176,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.8.9.13224",
-              "templateHash": "17184130445755527076"
+              "templateHash": "288860078455865507"
             }
           },
           "parameters": {
@@ -162,6 +187,12 @@
               "metadata": {
                 "description": "Log Analytics workspace name"
               }
+            },
+            "retentionInDays": {
+              "type": "int",
+              "defaultValue": 90,
+              "maxValue": 730,
+              "minValue": 30
             },
             "logAnalyticsWorkspaceSku": {
               "type": "string",
@@ -186,6 +217,9 @@
               }
             }
           },
+          "variables": {
+            "solutionName": "[format('SecurityInsights({0})', parameters('logAnalyticsWorkspaceName'))]"
+          },
           "resources": [
             {
               "type": "Microsoft.OperationalInsights/workspaces",
@@ -195,8 +229,27 @@
               "properties": {
                 "sku": {
                   "name": "[parameters('logAnalyticsWorkspaceSku')]"
-                }
+                },
+                "retentionInDays": "[parameters('retentionInDays')]"
               }
+            },
+            {
+              "type": "Microsoft.OperationsManagement/solutions",
+              "apiVersion": "2015-11-01-preview",
+              "name": "[variables('solutionName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+              },
+              "plan": {
+                "name": "[variables('solutionName')]",
+                "publisher": "Microsoft",
+                "product": "OMSGallery/SecurityInsights",
+                "promotionCode": ""
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+              ]
             }
           ],
           "outputs": {
@@ -580,6 +633,9 @@
           },
           "deploymentConfiguration": {
             "value": "[parameters('deploymentConfiguration')]"
+          },
+          "SiteRedundancyMode": {
+            "value": "[parameters('SiteRedundancyMode')]"
           }
         },
         "template": {
@@ -589,7 +645,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.8.9.13224",
-              "templateHash": "2273598109565961784"
+              "templateHash": "9113720266786159148"
             }
           },
           "parameters": {
@@ -609,6 +665,12 @@
               "type": "string",
               "metadata": {
                 "description": "App Service Plan id to host the app"
+              }
+            },
+            "SiteRedundancyMode": {
+              "type": "string",
+              "metadata": {
+                "description": "Site redundancy mode"
               }
             },
             "logAnalyticsWorkspaceId": {
@@ -669,6 +731,7 @@
                 "clientAffinityEnabled": false,
                 "serverFarmId": "[parameters('appServicePlanId')]",
                 "httpsOnly": true,
+                "redundancyMode": "[parameters('SiteRedundancyMode')]",
                 "enabled": true,
                 "reserved": true,
                 "siteConfig": {
@@ -782,6 +845,128 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-10-01",
+      "name": "functionDeploy",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "functionName": {
+            "value": "[variables('functioName')]"
+          },
+          "appServicePlanId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appServicePlanDeploy')).outputs.id.value]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "ghostApiVersion": {
+            "value": "[parameters('ghostApiVersion')]"
+          },
+          "ghostURL": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'FrontDoorDeploy'), '2020-10-01').outputs.frontendEndpointHostName.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.8.9.13224",
+              "templateHash": "17651714790697568596"
+            }
+          },
+          "parameters": {
+            "ghostApiVersion": {
+              "type": "string",
+              "allowedValues": [
+                "v4.0",
+                "v5.0"
+              ]
+            },
+            "ghostURL": {
+              "type": "string"
+            },
+            "functionName": {
+              "type": "string",
+              "maxLength": 60,
+              "minLength": 2
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location to deploy the resources"
+              }
+            },
+            "appServicePlanId": {
+              "type": "string",
+              "metadata": {
+                "description": "App Service Plan id to host the app"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2022-03-01",
+              "name": "[parameters('functionName')]",
+              "kind": "functionapp,linux",
+              "location": "[parameters('location')]",
+              "properties": {
+                "name": "deleteAllGhostPostsFunc",
+                "enabled": true,
+                "identity": {
+                  "type": "SystemAssigned"
+                },
+                "adminEnabled": true,
+                "siteProperties": {
+                  "properties": [
+                    {
+                      "name": "LinuxFxVersion",
+                      "value": "Node|16"
+                    },
+                    {
+                      "name": "WindowsFxVersion",
+                      "value": null
+                    }
+                  ],
+                  "appSettings": {
+                    "GHOST_URL": "[parameters('ghostURL')]",
+                    "GHOST_API_VERSION": "[parameters('ghostApiVersion')]"
+                  }
+                },
+                "serverFarmId": "[parameters('appServicePlanId')]",
+                "siteConfig": {
+                  "numberOfWorkers": 1,
+                  "linuxFxVersion": "Node|16",
+                  "alwaysOn": true,
+                  "http20Enabled": false,
+                  "functionAppScaleLimit": 0,
+                  "minimumElasticInstanceCount": 0
+                },
+                "sku": "Basic",
+                "kind": "functionapp,linux",
+                "httpsOnly": true,
+                "redundancyMode": "None",
+                "eligibleLogCategories": "FunctionAppLogs",
+                "storageAccountRequired": false,
+                "keyVaultReferenceIdentity": "SystemAssigned"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'appServicePlanDeploy')]",
+        "[resourceId('Microsoft.Resources/deployments', 'FrontDoorDeploy')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
       "name": "webAppSettingsDeploy",
       "properties": {
         "expressionEvaluationOptions": {
@@ -808,7 +993,7 @@
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'mySQLServerDeploy')).outputs.fullyQualifiedDomainName.value]"
           },
           "databaseLogin": {
-            "value": "[format('{0}@{1}', variables('databaseLogin'), reference(resourceId('Microsoft.Resources/deployments', 'mySQLServerDeploy')).outputs.name.value)]"
+            "value": "[variables('databaseLogin')]"
           },
           "databasePasswordSecretUri": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVaultDeploy')).outputs.databasePasswordSecretUri.value]"

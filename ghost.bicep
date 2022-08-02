@@ -39,7 +39,7 @@ param geoRedundantBackup string
 param highAvailabilityMode string
 
 @description('Ghost container full image name and tag')
-param ghostContainerName string = 'andrewmatveychuk/ghost-ai:latest'
+param ghostContainerName string = 'gitarplayer/ghost-az-ai:prod'
 
 @description('Container registry where the image is hosted')
 param containerRegistryUrl string = 'https://index.docker.io/v1'
@@ -50,10 +50,29 @@ param containerRegistryUrl string = 'https://index.docker.io/v1'
 ])
 param deploymentConfiguration string = 'Web app with Azure Front Door'
 
+@minValue(30)
+@maxValue(730)
+param retentionInDays int = 90
+
+
+@allowed([
+  'v4.0'
+  'v5.0'
+])
+@description('The ghost API version used for the azure function')
+param ghostApiVersion string
+
+param pkgURL string = 'https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip'
+
+
+//vars
+
 var webAppName = '${applicationNamePrefix}-web-${uniqueString(resourceGroup().id)}'
+var functionName = '${applicationNamePrefix}-web-function-${uniqueString(resourceGroup().id)}'
 var appServicePlanName = '${applicationNamePrefix}-asp-${uniqueString(resourceGroup().id)}'
 var logAnalyticsWorkspaceName = '${applicationNamePrefix}-la-${uniqueString(resourceGroup().id)}'
 var applicationInsightsName = '${applicationNamePrefix}-ai-${uniqueString(resourceGroup().id)}'
+var applicationInsightsNameFunction = '${applicationNamePrefix}-ai-function-${uniqueString(resourceGroup().id)}'
 var keyVaultName = '${applicationNamePrefix}-kv-${uniqueString(resourceGroup().id)}'
 var storageAccountName = '${applicationNamePrefix}stor${uniqueString(resourceGroup().id)}'
 
@@ -64,6 +83,7 @@ var databaseName = 'ghost'
 var ghostContentFileShareName = 'contentfiles'
 var ghostContentFilesMountPath = '/var/lib/ghost/content_files'
 var siteUrl = (deploymentConfiguration == 'Web app with Azure Front Door') ? 'https://${frontDoorName}.azurefd.net' : 'https://${cdnEndpointName}.azureedge.net'
+
 
 //Web app with Azure CDN
 var cdnProfileName = '${applicationNamePrefix}-cdnp-${uniqueString(resourceGroup().id)}'
@@ -82,6 +102,7 @@ module logAnalyticsWorkspace './modules/logAnalyticsWorkspace.bicep' = {
     logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
     logAnalyticsWorkspaceSku: logAnalyticsWorkspaceSku
     location: location
+    retentionInDays: retentionInDays
   }
 }
 
@@ -121,6 +142,21 @@ module webApp './modules/webApp.bicep' = {
     location: location
     logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
     deploymentConfiguration: deploymentConfiguration
+  }
+}
+
+module function './modules/function.bicep' = {
+  name: 'functionDeploy'
+  params: {
+    pkgURL: pkgURL
+    functionName: functionName
+    appServicePlanId: appServicePlan.outputs.id
+    location: location
+    applicationInsightsNameFunction: applicationInsightsNameFunction
+    ghostApiVersion: ghostApiVersion
+    ghostURL: frontDoor.outputs.frontendEndpointHostName
+    storageAccountAccessKey: storageAccount.outputs.accessKey
+    storageAccountName: storageAccount.outputs.name
   }
 }
 

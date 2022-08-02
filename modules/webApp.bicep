@@ -4,11 +4,13 @@ targetScope = 'resourceGroup'
 @maxLength(60)
 param webAppName string
 
+
 @description('Location to deploy the resources')
 param location string = resourceGroup().location
 
 @description('App Service Plan id to host the app')
 param appServicePlanId string
+
 
 @description('Log Analytics workspace id to use for diagnostics settings')
 param logAnalyticsWorkspaceId string
@@ -33,6 +35,8 @@ param containerMountPath string
   'Web app with Azure Front Door'
 ])
 param deploymentConfiguration string
+
+
 
 var containerImageReference = 'DOCKER|${ghostContainerImage}'
 
@@ -126,6 +130,9 @@ resource webAppDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-pre
     ]
   }
 }
+
+
+
 
 output name string = webApp.name
 output hostName string = webApp.properties.hostNames[0]
