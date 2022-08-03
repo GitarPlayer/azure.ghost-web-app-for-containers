@@ -15,8 +15,11 @@ param appServicePlanId string
 @description('Log Analytics workspace id to use for diagnostics settings')
 param logAnalyticsWorkspaceId string
 
-@description('Ghost container full image name and tag')
+@description('Ghost container full image name')
 param ghostContainerImage string
+
+@description('Ghost container tag')
+param ghostContainerTag string
 
 @description('Storage account name to store Ghost content files')
 param storageAccountName string
@@ -33,12 +36,13 @@ param containerMountPath string
 @allowed([
   'Web app with Azure CDN'
   'Web app with Azure Front Door'
+  'Web app dev'
 ])
 param deploymentConfiguration string
 
 
 
-var containerImageReference = 'DOCKER|${ghostContainerImage}'
+var containerImageReference = 'DOCKER|${ghostContainerImage}:${ghostContainerTag}'
 
 resource webApp 'Microsoft.Web/sites@2021-01-15' = {
   name: webAppName
@@ -137,3 +141,4 @@ resource webAppDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-pre
 output name string = webApp.name
 output hostName string = webApp.properties.hostNames[0]
 output principalId string = webApp.identity.principalId
+

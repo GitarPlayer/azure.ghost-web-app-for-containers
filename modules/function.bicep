@@ -39,11 +39,6 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
   properties: {
     serverFarmId: appServicePlanId
     siteConfig: {
-      azureStorageAccounts: {
-        ContentFilesVolume: {
-          type: 'AzureFiles'
-        }
-      }
       appSettings: [
         {
           name: 'GHOST_URL'
