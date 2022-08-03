@@ -41,7 +41,6 @@ param containerMountPath string
 param deploymentConfiguration string
 
 
-
 var containerImageReference = 'DOCKER|${ghostContainerImage}:${ghostContainerTag}'
 
 resource webApp 'Microsoft.Web/sites@2021-01-15' = {
@@ -77,6 +76,10 @@ resource webApp 'Microsoft.Web/sites@2021-01-15' = {
     }
   }
 }
+
+
+
+
 
 resource siteConfig 'Microsoft.Web/sites/config@2021-01-15' = if (deploymentConfiguration == 'Web app with Azure Front Door') {
   parent: webApp

@@ -1,45 +1,81 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-      "pkgURL": {
-        "value": "https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip"
-      },
-      "storageAccountSku": {
-        "value": "Standard_RAGRS"
-      },
-      "applicationNamePrefix": {
-        "value": "ghost"
-      },
-      "appServicePlanSku": {
-        "value": "P3v2"
-      },
-      "logAnalyticsWorkspaceSku": {
-        "value": "PerGB2018"
-      },
-      "mySQLServerSku": {
-        "value": "Standard_D2ds_v4"
-      },
-      "geoRedundantBackup": {
-        "value": "Enabled"
-      },
-      "highAvailabilityMode": {
-        "value": "ZoneRedundant"
-      },
-      "ghostContainerName": {
-        "value": "andrewmatveychuk/ghost-ai:latest"
-      },
-      "containerRegistryUrl": {
-        "value": "https://index.docker.io/v1"
-      },
-      "deploymentConfiguration": {
-        "value": "Web app with Azure Front Door"
-      },
-      "retentionInDays": {
-        "value": 90
-      },
-      "ghostApiVersion": {
-        "value": "v4.0"
-      }
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "devPkgURL": {
+      "value": "https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip"
+    },
+    "stagePkgURL": {
+      "value": "https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip"
+    },
+    "prodPkgURL": {
+      "value": "https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip"
+    },
+    "storageAccountSku": {
+      "value": "Standard_RAGRS"
+    },
+    "devStorageAccountSku": {
+      "value": "Standard_LRS"
+    },
+    "applicationNamePrefix": {
+      "value": "ghost"
+    },
+    "appServicePlanSku": {
+      "value": "P3v2"
+    },
+    "devAppServicePlanSku": {
+      "value": "F1"
+    },
+    "devLogAnalyticsWorkspaceSku": {
+      "value": "PerGB2018"
+    },
+    "stageLogAnalyticsWorkspaceSku": {
+      "value": "PerGB2018"
+    },
+    "prodLogAnalyticsWorkspaceSku": {
+      "value": "PerGB2018"
+    },
+    "mySQLServerSku": {
+      "value": "Standard_D2ds_v4"
+    },
+    "devMySQLServerSku": {
+      "value": "B1s"
+    },
+    "geoRedundantBackup": {
+      "value": "Enabled"
+    },
+    "devGeoRedundantBackup": {
+      "value": "Disabled"
+    },
+    "highAvailabilityMode": {
+      "value": "ZoneRedundant"
+    },
+    "devHighAvailabilityMode": {
+      "value": "Disabled"
+    },
+    "ghostContainerName": {
+      "value": "andrewmatveychuk/ghost-ai:latest"
+    },
+    "containerRegistryUrl": {
+      "value": "https://index.docker.io/v1"
+    },
+    "stageDeploymentConfiguration": {
+      "value": "Web app with Azure Front Door"
+    },
+    "prodDeploymentConfiguration": {
+      "value": "Web app with Azure Front Door"
+    },
+    "devRetentionInDays": {
+      "value": 30
+    },
+    "retentionInDays": {
+      "value": 90
+    },
+    "ghostApiVersion": {
+      "value": "v4.0"
+    },
+    "devGhostApiVersion": {
+      "value": "v5.0"
     }
+  }
 }

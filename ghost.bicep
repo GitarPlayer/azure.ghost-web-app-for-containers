@@ -3,54 +3,62 @@ targetScope = 'resourceGroup'
 @description('Prefix to use when creating the resources in this deployment.')
 param applicationNamePrefix string = 'ghost'
 
-@description('App Service Plan pricing tier')
-param appServicePlanSku string = 'B1'
 
-
-@description('App Service Plan pricing tier for dev')
+@description('Dev App Service Plan pricing tier for dev')
 param devAppServicePlanSku string = 'B1'
 
+@description('Stage/Prod App Service Plan pricing tier')
+param appServicePlanSku string = 'B1'
+
 @description('Log Analytics workspace pricing tier')
+param devLogAnalyticsWorkspaceSku string = 'PerGB2018'
+
+@description('Stage/Prod Log Analytics workspace pricing tier')
 param logAnalyticsWorkspaceSku string = 'PerGB2018'
 
-@description('Storage account pricing tier')
+@description('Dev Storage account pricing tier for dev')
+param devStorageAccountSku string = 'Standard_LRS'
+
+@description('Stage/Prod Storage account pricing tier')
 param storageAccountSku string = 'Standard_LRS'
 
-@description('Storage account pricing tier for dev')
-param devStorageAccountSku string = 'Standard_LRS'
 
 @description('Location to deploy the resources')
 param location string = resourceGroup().location
 
-@description('MySQL server SKU')
-param mySQLServerSku string = 'mySQLServerSku'
-
-@description('MySQL server SKU for dev')
+@description('Dev MySQL server SKU for dev')
 param devMySQLServerSku string = 'mySQLServerSku'
 
-
-@description('MySQL server password')
-@secure()
-param databasePassword string
+@description('Stage/Prod MySQL server SKU')
+param mySQLServerSku string = 'mySQLServerSku'
 
 
-@description('MySQL server password for dev')
+@description('Dev MySQL server password')
 @secure()
 param devDatabasePassword string
+
+@description('Stage MySQL server password')
+@secure()
+param stageDatabasePassword string
+
+@description('Prod MySQL server password')
+@secure()
+param prodDatabasePassword string
+
 
 
 @allowed([
   'Disabled'
   'Enabled'
 ])
-@description('Whether or not geo redundant backup is enabled.')
+@description('Stage/Prod Whether or not geo redundant backup is enabled.')
 param geoRedundantBackup string
 
 @allowed([
   'Disabled'
   'Enabled'
 ])
-@description('Whether or not geo redundant backup is enabled for dev')
+@description('Dev Whether or not geo redundant backup is enabled for dev')
 param devGeoRedundantBackup string
 
 
@@ -59,7 +67,7 @@ param devGeoRedundantBackup string
   'SameZone'
   'ZoneRedundant'
 ])
-@description('High availability mode for a server.')
+@description('Stage/Prod High availability mode for a server.')
 param highAvailabilityMode string
 
 
@@ -68,7 +76,7 @@ param highAvailabilityMode string
   'SameZone'
   'ZoneRedundant'
 ])
-@description('High availability mode for a server for dev')
+@description('Dev High availability mode for a server for dev')
 param devHighAvailabilityMode string
 
 
@@ -77,11 +85,21 @@ param ghostContainerName string = 'gitarplayer/ghost-az-ai'
 
 @allowed([
   'latest'
+])
+@description('Ghost container full image name and tag')
+param devGhostContainerTag string = 'latest'
+
+@allowed([
   'stage'
+])
+@description('Ghost container full image name and tag')
+param stageGhostContainerTag string = 'stage'
+
+@allowed([
   'prod'
 ])
 @description('Ghost container full image name and tag')
-param ghostContainerTag string 
+param prodGhostContainerTag string = 'prod'
 
 @description('Container registry where the image is hosted')
 param containerRegistryUrl string = 'https://index.docker.io/v1'
@@ -91,23 +109,38 @@ param containerRegistryUrl string = 'https://index.docker.io/v1'
   'Web app with Azure Front Door'
   'Web app dev'
 ])
-param deploymentConfiguration string = 'Web app with Azure Front Door'
+param devDeploymentConfiguration string = 'Web app dev'
+
+@allowed([
+  'Web app with Azure CDN'
+  'Web app with Azure Front Door'
+  'Web app dev'
+])
+param stageDeploymentConfiguration string = 'Web app with Azure Front Door'
+
+@allowed([
+  'Web app with Azure CDN'
+  'Web app with Azure Front Door'
+  'Web app dev'
+])
+param prodDeploymentConfiguration string = 'Web app with Azure Front Door'
 
 @minValue(30)
 @maxValue(730)
 param retentionInDays int = 90
 
-
 @minValue(30)
-@maxValue(730)
+@maxValue(90)
 param devRetentionInDays int = 30
+
+
 
 
 @allowed([
   'v4.0'
   'v5.0'
 ])
-@description('The ghost API version used for the azure function')
+@description('Stage/Prod The ghost API version used for the azure function')
 param ghostApiVersion string
 
 
@@ -115,11 +148,12 @@ param ghostApiVersion string
   'v4.0'
   'v5.0'
 ])
-@description('The ghost API version used for the azure function for dev')
+@description('Dev The ghost API version used for the azure function for dev')
 param devGhostApiVersion string
 
-param pkgURL string = 'https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip'
 param devPkgURL string = 'https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip'
+param stagePkgURL string = 'https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip'
+param prodPkgURL string = 'https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip'
 
 
 // vars
@@ -128,90 +162,127 @@ param devPkgURL string = 'https://github.com/GitarPlayer/azure-function-ghost/ar
 // prefixes
 var http_prefix = 'https://'
 var devPrefix = 'dev'
+var stagePrefix = 'stage'
+var prodPrefix = 'prod'
 
 // resource name vars
-var webAppName = '${applicationNamePrefix}-web-${uniqueString(resourceGroup().id)}'
-var devWebAppName = '${devPrefix}-${webAppName}'
-var functionName = '${applicationNamePrefix}-web-function-${uniqueString(resourceGroup().id)}'
-var devFunctionName = '${devPrefix}-${functionName}'
-var appServicePlanName = '${applicationNamePrefix}-asp-${uniqueString(resourceGroup().id)}'
-var devAppServicePlanName = '${devPrefix}-${appServicePlanName}'
-var logAnalyticsWorkspaceName = '${applicationNamePrefix}-la-${uniqueString(resourceGroup().id)}'
-var applicationInsightsName = '${applicationNamePrefix}-ai-${uniqueString(resourceGroup().id)}'
-var devApplicationInsightsName = '${devPrefix}-${applicationInsightsName}'
-var applicationInsightsNameFunction = '${applicationNamePrefix}-ai-function-${uniqueString(resourceGroup().id)}'
-var devApplicationInsightsNameFunction = '${devPrefix}-${applicationInsightsNameFunction}'
-var keyVaultName = '${applicationNamePrefix}-kv-${uniqueString(resourceGroup().id)}'
-var devKeyVaultName = '${devPrefix}-${keyVaultName}'
-var storageAccountName = '${applicationNamePrefix}stor${uniqueString(resourceGroup().id)}'
-var devStorageAccountName = '${devPrefix}-${storageAccountName}'
-var mySQLServerName = '${applicationNamePrefix}-mysql-${uniqueString(resourceGroup().id)}'
-var devMySQLServerName = '${devPrefix}-${mySQLServerName}'
+var devWebAppName = '${devPrefix}-${applicationNamePrefix}-web-${uniqueString(resourceGroup().id)}'
+var stageWebAppName = '${stagePrefix}-${applicationNamePrefix}-web-${uniqueString(resourceGroup().id)}'
+var prodWebAppName = '${prodPrefix}-${applicationNamePrefix}-web-${uniqueString(resourceGroup().id)}'
+var devFunctionName = '${devPrefix}-${applicationNamePrefix}-web-function-${uniqueString(resourceGroup().id)}'
+var stageFunctionName = '${stagePrefix}-${applicationNamePrefix}-web-function-${uniqueString(resourceGroup().id)}'
+var prodFunctionName = '${prodPrefix}-${applicationNamePrefix}-web-function-${uniqueString(resourceGroup().id)}'
+var devAppServicePlanName = '${devPrefix}-${applicationNamePrefix}-asp-${uniqueString(resourceGroup().id)}'
+var stageAppServicePlanName = '${stagePrefix}-${applicationNamePrefix}-asp-${uniqueString(resourceGroup().id)}'
+var prodAppServicePlanName = '${prodPrefix}-${applicationNamePrefix}-asp-${uniqueString(resourceGroup().id)}'
+var devLogAnalyticsWorkspaceName = '${devPrefix}-${applicationNamePrefix}-la-${uniqueString(resourceGroup().id)}'
+var stageLogAnalyticsWorkspaceName = '${stagePrefix}-${applicationNamePrefix}-la-${uniqueString(resourceGroup().id)}'
+var prodLogAnalyticsWorkspaceName = '${prodPrefix}-${applicationNamePrefix}-la-${uniqueString(resourceGroup().id)}'
+var devApplicationInsightsName = '${devPrefix}-${applicationNamePrefix}-ai-${uniqueString(resourceGroup().id)}'
+var stageApplicationInsightsName = '${stagePrefix}-${applicationNamePrefix}-ai-${uniqueString(resourceGroup().id)}'
+var prodApplicationInsightsName = '${prodPrefix}-${applicationNamePrefix}-ai-${uniqueString(resourceGroup().id)}'
+var devApplicationInsightsNameFunction = '${devPrefix}-${applicationNamePrefix}-ai-function-${uniqueString(resourceGroup().id)}'
+var stageApplicationInsightsNameFunction = '${stagePrefix}-${applicationNamePrefix}-ai-function-${uniqueString(resourceGroup().id)}'
+var prodApplicationInsightsNameFunction = '${prodPrefix}-${applicationNamePrefix}-ai-function-${uniqueString(resourceGroup().id)}'
+var devKeyVaultName = '${devPrefix}-${applicationNamePrefix}-kv-${uniqueString(resourceGroup().id)}'
+var stageKeyVaultName = '${stagePrefix}-${applicationNamePrefix}-kv-${uniqueString(resourceGroup().id)}'
+var prodKeyVaultName = '${prodPrefix}-${applicationNamePrefix}-kv-${uniqueString(resourceGroup().id)}'
+var devStorageAccountName = '${devPrefix}-${applicationNamePrefix}stor${uniqueString(resourceGroup().id)}'
+var stageStorageAccountName = '${stagePrefix}-${applicationNamePrefix}stor${uniqueString(resourceGroup().id)}'
+var prodStorageAccountName = '${prodPrefix}-${applicationNamePrefix}stor${uniqueString(resourceGroup().id)}'
+var devMySQLServerName = '${devPrefix}-${applicationNamePrefix}-mysql-${uniqueString(resourceGroup().id)}'
+var stageMySQLServerName = '${stagePrefix}-${applicationNamePrefix}-mysql-${uniqueString(resourceGroup().id)}'
+var prodMySQLServerName = '${prodPrefix}-${applicationNamePrefix}-mysql-${uniqueString(resourceGroup().id)}'
 
 // other vars
 var databaseLogin = 'ghost'
 var databaseName = 'ghost'
-var ghostContentFileShareName = 'contentfiles'
-var devGhostContentFileShareName = '${devPrefix}Contentfiles'
+var devGhostContentFileShareName = '${devPrefix}-contentfiles'
+var stageGhostContentFileShareName = '${stagePrefix}-contentfiles'
+var prodGhostContentFileShareName = '${prodPrefix}-contentfiles'
 var ghostContentFilesMountPath = '/var/lib/ghost/content_files'
-var siteUrl = (deploymentConfiguration == 'Web app with Azure Front Door') ? 'https://${frontDoorName}.azurefd.net' : 'https://${cdnEndpointName}.azureedge.net'
+var stageSiteUrl = (stageDeploymentConfiguration == 'Web app with Azure Front Door') ? 'https://${stageFrontDoorName}.azurefd.net' : 'https://${stageCdnEndpointName}.azureedge.net'
+var prodSiteUrl = (prodDeploymentConfiguration == 'Web app with Azure Front Door') ? 'https://${prodFrontDoorName}.azurefd.net' : 'https://${prodCdnEndpointName}.azureedge.net'
 
 
 // TODO
 // var devSiteUrl 
 
 //Web app with Azure CDN
-var cdnProfileName = '${applicationNamePrefix}-cdnp-${uniqueString(resourceGroup().id)}'
-var cdnEndpointName = '${applicationNamePrefix}-cdne-${uniqueString(resourceGroup().id)}'
+var stageCdnProfileName = '${stagePrefix}-${applicationNamePrefix}-cdnp-${uniqueString(resourceGroup().id)}'
+var prodCdnProfileName = '${prodPrefix}-${applicationNamePrefix}-cdnp-${uniqueString(resourceGroup().id)}'
+var stageCdnEndpointName = '${stagePrefix}-${applicationNamePrefix}-cdne-${uniqueString(resourceGroup().id)}'
+var prodCdnEndpointName = '${prodPrefix}-${applicationNamePrefix}-cdne-${uniqueString(resourceGroup().id)}'
 var cdnProfileSku = {
   name: 'Standard_Microsoft'
 }
 
 //Web app with Azure Front Door
-var frontDoorName = '${applicationNamePrefix}-fd-${uniqueString(resourceGroup().id)}'
-var wafPolicyName = '${applicationNamePrefix}waf${uniqueString(resourceGroup().id)}'
+var stageFrontDoorName = '${stagePrefix}-${applicationNamePrefix}-fd-${uniqueString(resourceGroup().id)}'
+var stageWafPolicyName = '${stagePrefix}-${applicationNamePrefix}waf${uniqueString(resourceGroup().id)}'
+var prodFrontDoorName = '${prodPrefix}-${applicationNamePrefix}-fd-${uniqueString(resourceGroup().id)}'
+var prodWafPolicyName = '${prodPrefix}-${applicationNamePrefix}waf${uniqueString(resourceGroup().id)}'
 
-module logAnalyticsWorkspace './modules/logAnalyticsWorkspace.bicep' = {
-  name: 'logAnalyticsWorkspaceDeploy'
+module devLogAnalyticsWorkspace './modules/logAnalyticsWorkspace.bicep' = {
+  name: 'devLogAnalyticsWorkspaceDeploy'
   params: {
-    logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
+    logAnalyticsWorkspaceName: devLogAnalyticsWorkspaceName
+    logAnalyticsWorkspaceSku: devLogAnalyticsWorkspaceSku
+    location: location
+    retentionInDays: devRetentionInDays
+  }
+}
+
+module stageLogAnalyticsWorkspace './modules/logAnalyticsWorkspace.bicep' = {
+  name: 'stageLogAnalyticsWorkspaceDeploy'
+  params: {
+    logAnalyticsWorkspaceName: stageLogAnalyticsWorkspaceName
     logAnalyticsWorkspaceSku: logAnalyticsWorkspaceSku
     location: location
     retentionInDays: retentionInDays
   }
 }
 
-module storageAccount 'modules/storageAccount.bicep' = {
-  name: 'storageAccountDeploy'
+module prodLogAnalyticsWorkspace './modules/logAnalyticsWorkspace.bicep' = {
+  name: 'prodLogAnalyticsWorkspaceDeploy'
   params: {
-    storageAccountName: storageAccountName
-    storageAccountSku: storageAccountSku
-    fileShareFolderName: ghostContentFileShareName
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
+    logAnalyticsWorkspaceName: prodLogAnalyticsWorkspaceName
+    logAnalyticsWorkspaceSku: logAnalyticsWorkspaceSku
     location: location
+    retentionInDays: retentionInDays
   }
 }
 
-// dev storageAccount
 module devStorageAccount 'modules/storageAccount.bicep' = {
   name: '${devPrefix}storageAccountDeploy'
   params: {
     storageAccountName: devStorageAccountName
     storageAccountSku: devStorageAccountSku
     fileShareFolderName: devGhostContentFileShareName
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
+    logAnalyticsWorkspaceId: devLogAnalyticsWorkspace.outputs.id
     location: location
   }
 }
 
-module keyVault './modules/keyVault.bicep' = {
-  name: 'keyVaultDeploy'
+// dev storageAccount
+module stageStorageAccount 'modules/storageAccount.bicep' = {
+  name: '${stagePrefix}storageAccountDeploy'
   params: {
-    keyVaultName: keyVaultName
-    keyVaultSecretName: 'databasePassword'
-    keyVaultSecretValue: databasePassword
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
-    servicePrincipalId: webApp.outputs.principalId
+    storageAccountName: stageStorageAccountName
+    storageAccountSku: storageAccountSku
+    fileShareFolderName: stageGhostContentFileShareName
+    logAnalyticsWorkspaceId: stageLogAnalyticsWorkspace.outputs.id
+    location: location
+  }
+}
+
+module prodStorageAccount 'modules/storageAccount.bicep' = {
+  name: '${prodPrefix}storageAccountDeploy'
+  params: {
+    storageAccountName: prodStorageAccountName
+    storageAccountSku: storageAccountSku
+    fileShareFolderName: prodGhostContentFileShareName
+    logAnalyticsWorkspaceId: prodLogAnalyticsWorkspace.outputs.id
     location: location
   }
 }
@@ -222,27 +293,34 @@ module devKeyVault './modules/keyVault.bicep' = {
   params: {
     keyVaultName: devKeyVaultName
     keyVaultSecretName: 'databasePassword'
-    keyVaultSecretValue: databasePassword
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
+    keyVaultSecretValue: devDatabasePassword
+    logAnalyticsWorkspaceId: devLogAnalyticsWorkspace.outputs.id
     servicePrincipalId: devWebApp.outputs.principalId
     location: location
   }
 }
 
-module webApp './modules/webApp.bicep' = {
-  name: 'webAppDeploy'
+module stageKeyVault './modules/keyVault.bicep' = {
+  name: '${stagePrefix}KeyVaultDeploy'
   params: {
-    webAppName: webAppName
-    appServicePlanId: appServicePlan.outputs.id
-    ghostContainerImage: ghostContainerName
-    ghostContainerTag: ghostContainerTag
-    storageAccountName: storageAccount.outputs.name
-    storageAccountAccessKey: storageAccount.outputs.accessKey
-    fileShareName: ghostContentFileShareName
-    containerMountPath: ghostContentFilesMountPath
+    keyVaultName: stageKeyVaultName
+    keyVaultSecretName: 'databasePassword'
+    keyVaultSecretValue: stageDatabasePassword
+    logAnalyticsWorkspaceId: stageLogAnalyticsWorkspace.outputs.id
+    servicePrincipalId: stageWebApp.outputs.principalId
     location: location
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
-    deploymentConfiguration: deploymentConfiguration
+  }
+}
+
+module prodKeyVault './modules/keyVault.bicep' = {
+  name: '${prodPrefix}KeyVaultDeploy'
+  params: {
+    keyVaultName: prodKeyVaultName
+    keyVaultSecretName: 'databasePassword'
+    keyVaultSecretValue: prodDatabasePassword
+    logAnalyticsWorkspaceId: prodLogAnalyticsWorkspace.outputs.id
+    servicePrincipalId: prodWebApp.outputs.principalId
+    location: location
   }
 }
 
@@ -253,29 +331,48 @@ module devWebApp './modules/webApp.bicep' = {
     webAppName: devWebAppName
     appServicePlanId: devAppServicePlan.outputs.id
     ghostContainerImage: ghostContainerName
-    ghostContainerTag: 'latest'
+    ghostContainerTag: devGhostContainerTag
     storageAccountName: devStorageAccount.outputs.name
     storageAccountAccessKey: devStorageAccount.outputs.accessKey
     fileShareName: devGhostContentFileShareName
     containerMountPath: ghostContentFilesMountPath
     location: location
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
-    deploymentConfiguration: 'Web app dev'
+    logAnalyticsWorkspaceId: devLogAnalyticsWorkspace.outputs.id
+    deploymentConfiguration: devDeploymentConfiguration
   }
 }
 
-module function './modules/function.bicep' = {
-  name: 'functionDeploy'
+module stageWebApp './modules/webApp.bicep' = {
+  name: '${stagePrefix}WebAppDeploy'
   params: {
-    pkgURL: pkgURL
-    functionName: functionName
-    appServicePlanId: appServicePlan.outputs.id
+    webAppName: stageWebAppName
+    appServicePlanId: stageAppServicePlan.outputs.id
+    ghostContainerImage: ghostContainerName
+    ghostContainerTag: stageGhostContainerTag
+    storageAccountName: stageStorageAccount.outputs.name
+    storageAccountAccessKey: stageStorageAccount.outputs.accessKey
+    fileShareName: stageGhostContentFileShareName
+    containerMountPath: ghostContentFilesMountPath
     location: location
-    applicationInsightsNameFunction: applicationInsightsNameFunction
-    ghostApiVersion: ghostApiVersion
-    ghostURL: '${http_prefix}${frontDoor.outputs.frontendEndpointHostName}'
-    storageAccountAccessKey: storageAccount.outputs.accessKey
-    storageAccountName: storageAccount.outputs.name
+    logAnalyticsWorkspaceId: stageLogAnalyticsWorkspace.outputs.id
+    deploymentConfiguration: stageDeploymentConfiguration
+  }
+}
+
+module prodWebApp './modules/webApp.bicep' = {
+  name: '${prodPrefix}WebAppDeploy'
+  params: {
+    webAppName: prodWebAppName
+    appServicePlanId: prodAppServicePlan.outputs.id
+    ghostContainerImage: ghostContainerName
+    ghostContainerTag: prodGhostContainerTag
+    storageAccountName: prodStorageAccount.outputs.name
+    storageAccountAccessKey: prodStorageAccount.outputs.accessKey
+    fileShareName: prodGhostContentFileShareName
+    containerMountPath: ghostContentFilesMountPath
+    location: location
+    logAnalyticsWorkspaceId: prodLogAnalyticsWorkspace.outputs.id
+    deploymentConfiguration: prodDeploymentConfiguration
   }
 }
 
@@ -283,7 +380,7 @@ module function './modules/function.bicep' = {
 module devFunction './modules/function.bicep' = {
   name: '${devPrefix}functionDeploy'
   params: {
-    pkgURL: pkgURL
+    pkgURL: devPkgURL
     functionName: devFunctionName
     appServicePlanId: devAppServicePlan.outputs.id
     location: location
@@ -295,19 +392,33 @@ module devFunction './modules/function.bicep' = {
   }
 }
 
-module webAppSettings 'modules/webAppSettings.bicep' = {
-  name: 'webAppSettingsDeploy'
+module stagefunction './modules/function.bicep' = {
+  name: '${stagePrefix}functionDeploy'
   params: {
-    webAppName: webApp.outputs.name
-    applicationInsightsConnectionString: applicationInsights.outputs.ConnectionString
-    applicationInsightsInstrumentationKey: applicationInsights.outputs.InstrumentationKey
-    containerRegistryUrl: containerRegistryUrl
-    containerMountPath: ghostContentFilesMountPath
-    databaseHostFQDN: mySQLServer.outputs.fullyQualifiedDomainName
-    databaseLogin: databaseLogin
-    databasePasswordSecretUri: keyVault.outputs.databasePasswordSecretUri
-    databaseName: databaseName
-    siteUrl: siteUrl
+    pkgURL: stagePkgURL
+    functionName: stageFunctionName
+    appServicePlanId: stageAppServicePlan.outputs.id
+    location: location
+    applicationInsightsNameFunction: stageApplicationInsightsNameFunction
+    ghostApiVersion: ghostApiVersion
+    ghostURL: '${http_prefix}${stageFrontDoor.outputs.frontendEndpointHostName}'
+    storageAccountAccessKey: stageStorageAccount.outputs.accessKey
+    storageAccountName: stageStorageAccount.outputs.name
+  }
+}
+
+module prodfunction './modules/function.bicep' = {
+  name: '${prodPrefix}functionDeploy'
+  params: {
+    pkgURL: prodPkgURL
+    functionName: prodFunctionName
+    appServicePlanId: prodAppServicePlan.outputs.id
+    location: location
+    applicationInsightsNameFunction: prodApplicationInsightsNameFunction
+    ghostApiVersion: ghostApiVersion
+    ghostURL: '${http_prefix}${prodFrontDoor.outputs.frontendEndpointHostName}'
+    storageAccountAccessKey: prodStorageAccount.outputs.accessKey
+    storageAccountName: prodStorageAccount.outputs.name
   }
 }
 
@@ -324,17 +435,39 @@ module devWebAppSettings 'modules/webAppSettings.bicep' = {
     databaseLogin: databaseLogin
     databasePasswordSecretUri: devKeyVault.outputs.databasePasswordSecretUri
     databaseName: databaseName
-    siteUrl: devSiteUrl
+    siteUrl: 'devSiteUrl'
   }
 }
 
-module appServicePlan './modules/appServicePlan.bicep' = {
-  name: 'appServicePlanDeploy'
+module stagewebAppSettings 'modules/webAppSettings.bicep' = {
+  name: 'stagewebAppSettingsDeploy'
   params: {
-    appServicePlanName: appServicePlanName
-    appServicePlanSku: appServicePlanSku
-    location: location
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
+    webAppName: stageWebApp.outputs.name
+    applicationInsightsConnectionString: stageApplicationInsights.outputs.ConnectionString
+    applicationInsightsInstrumentationKey: stageApplicationInsights.outputs.InstrumentationKey
+    containerRegistryUrl: containerRegistryUrl
+    containerMountPath: ghostContentFilesMountPath
+    databaseHostFQDN: stageMySQLServer.outputs.fullyQualifiedDomainName
+    databaseLogin: databaseLogin
+    databasePasswordSecretUri: stageKeyVault.outputs.databasePasswordSecretUri
+    databaseName: databaseName
+    siteUrl: stageSiteUrl
+  }
+}
+
+module prodwebAppSettings 'modules/webAppSettings.bicep' = {
+  name: 'prodwebAppSettingsDeploy'
+  params: {
+    webAppName: prodWebApp.outputs.name
+    applicationInsightsConnectionString: prodApplicationInsights.outputs.ConnectionString
+    applicationInsightsInstrumentationKey: prodApplicationInsights.outputs.InstrumentationKey
+    containerRegistryUrl: containerRegistryUrl
+    containerMountPath: ghostContentFilesMountPath
+    databaseHostFQDN: prodMySQLServer.outputs.fullyQualifiedDomainName
+    databaseLogin: databaseLogin
+    databasePasswordSecretUri: prodKeyVault.outputs.databasePasswordSecretUri
+    databaseName: databaseName
+    siteUrl: prodSiteUrl
   }
 }
 
@@ -345,51 +478,68 @@ module devAppServicePlan './modules/appServicePlan.bicep' = {
     appServicePlanName: devAppServicePlanName
     appServicePlanSku: devAppServicePlanSku
     location: location
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
+    logAnalyticsWorkspaceId: devLogAnalyticsWorkspace.outputs.id
   }
 }
 
-module applicationInsights './modules/applicationInsights.bicep' = {
-  name: 'applicationInsightsDeploy'
+module stageAppServicePlan './modules/appServicePlan.bicep' = {
+  name: '${stagePrefix}appServicePlanDeploy'
   params: {
-    applicationInsightsName: applicationInsightsName
+    appServicePlanName: stageAppServicePlanName
+    appServicePlanSku: appServicePlanSku
     location: location
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
+    logAnalyticsWorkspaceId: stageLogAnalyticsWorkspace.outputs.id
   }
 }
+
+module prodAppServicePlan './modules/appServicePlan.bicep' = {
+  name: '${prodPrefix}appServicePlanDeploy'
+  params: {
+    appServicePlanName: prodAppServicePlanName
+    appServicePlanSku: appServicePlanSku
+    location: location
+    logAnalyticsWorkspaceId: prodLogAnalyticsWorkspace.outputs.id
+  }
+}
+
 
 // devApplicationInsights
 module devApplicationInsights './modules/applicationInsights.bicep' = {
-  name: '${devPrefix}applicationInsightsDeploy'
+  name: '${devPrefix}ApplicationInsightsDeploy'
   params: {
     applicationInsightsName: devApplicationInsightsName
     location: location
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
+    logAnalyticsWorkspaceId: devLogAnalyticsWorkspace.outputs.id
   }
 }
 
-module mySQLServer 'modules/mySQLServer.bicep' = {
-  name: 'mySQLServerDeploy'
+module stageApplicationInsights './modules/applicationInsights.bicep' = {
+  name: '${stagePrefix}ApplicationInsightsDeploy'
   params: {
-    administratorLogin: databaseLogin
-    administratorPassword: databasePassword
+    applicationInsightsName: stageApplicationInsightsName
     location: location
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
-    mySQLServerName: mySQLServerName
-    mySQLServerSku: mySQLServerSku
-    geoRedundantBackup: geoRedundantBackup
-    highAvailabilityMode: highAvailabilityMode
+    logAnalyticsWorkspaceId: stageLogAnalyticsWorkspace.outputs.id
   }
 }
+
+module prodApplicationInsights './modules/applicationInsights.bicep' = {
+  name: '${prodPrefix}ApplicationInsightsDeploy'
+  params: {
+    applicationInsightsName: prodApplicationInsightsName
+    location: location
+    logAnalyticsWorkspaceId: prodLogAnalyticsWorkspace.outputs.id
+  }
+}
+
 
 // devMySQLServer
 module devMySQLServer 'modules/mySQLServer.bicep' = {
-  name: '${devPrefix}mySQLServerDeploy'
+  name: '${devPrefix}MySQLServerDeploy'
   params: {
     administratorLogin: databaseLogin
     administratorPassword: devDatabasePassword
     location: location
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
+    logAnalyticsWorkspaceId: devLogAnalyticsWorkspace.outputs.id
     mySQLServerName: devMySQLServerName
     mySQLServerSku: devMySQLServerSku
     geoRedundantBackup: devGeoRedundantBackup
@@ -397,40 +547,95 @@ module devMySQLServer 'modules/mySQLServer.bicep' = {
   }
 }
 
-module cdnEndpoint './modules/cdnEndpoint.bicep' = if (deploymentConfiguration == 'Web app with Azure CDN') {
-  name: 'cdnEndPointDeploy'
+module stageMySQLServer 'modules/mySQLServer.bicep' = {
+  name: '${stagePrefix}MySQLServerDeploy'
   params: {
-    cdnProfileName: cdnProfileName
-    cdnProfileSku: cdnProfileSku
-    cdnEndpointName: cdnEndpointName
+    administratorLogin: databaseLogin
+    administratorPassword: stageDatabasePassword
     location: location
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
-    webAppName: webApp.name
-    webAppHostName: webApp.outputs.hostName
+    logAnalyticsWorkspaceId: stageLogAnalyticsWorkspace.outputs.id
+    mySQLServerName: stageMySQLServerName
+    mySQLServerSku: mySQLServerSku
+    geoRedundantBackup: geoRedundantBackup
+    highAvailabilityMode: highAvailabilityMode
   }
 }
 
-module frontDoor 'modules/frontDoor.bicep' = if (deploymentConfiguration == 'Web app with Azure Front Door') {
-  name: 'FrontDoorDeploy'
+module prodMySQLServer 'modules/mySQLServer.bicep' = {
+  name: '${prodPrefix}MySQLServerDeploy'
   params: {
-    frontDoorName: frontDoorName
-    wafPolicyName: wafPolicyName
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
-    webAppName: webApp.outputs.name
+    administratorLogin: databaseLogin
+    administratorPassword: prodDatabasePassword
+    location: location
+    logAnalyticsWorkspaceId: prodLogAnalyticsWorkspace.outputs.id
+    mySQLServerName: prodMySQLServerName
+    mySQLServerSku: mySQLServerSku
+    geoRedundantBackup: geoRedundantBackup
+    highAvailabilityMode: highAvailabilityMode
   }
 }
 
-output webAppName string = webApp.outputs.name
-output webAppPrincipalId string = webApp.outputs.principalId
-output webAppHostName string = webApp.outputs.hostName
+
+module stageCdnEndpoint './modules/cdnEndpoint.bicep' = if (stageDeploymentConfiguration == 'Web app with Azure CDN') {
+  name: 'stageCdnEndPointDeploy'
+  params: {
+    cdnProfileName: stageCdnProfileName
+    cdnProfileSku: cdnProfileSku
+    cdnEndpointName: stageCdnEndpointName
+    location: location
+    logAnalyticsWorkspaceId: stageLogAnalyticsWorkspace.outputs.id
+    webAppName: stageWebApp.name
+    webAppHostName: stageWebApp.outputs.hostName
+  }
+}
+
+module prodCdnEndpoint './modules/cdnEndpoint.bicep' = if (prodDeploymentConfiguration == 'Web app with Azure CDN') {
+  name: 'prodCdnEndPointDeploy'
+  params: {
+    cdnProfileName: prodCdnProfileName
+    cdnProfileSku: cdnProfileSku
+    cdnEndpointName: prodCdnEndpointName
+    location: location
+    logAnalyticsWorkspaceId: prodLogAnalyticsWorkspace.outputs.id
+    webAppName: prodWebApp.name
+    webAppHostName: prodWebApp.outputs.hostName
+  }
+}
+
+module stageFrontDoor 'modules/frontDoor.bicep' = if (stageDeploymentConfiguration == 'Web app with Azure Front Door') {
+  name: 'stageFrontDoorDeploy'
+  params: {
+    frontDoorName: stageFrontDoorName
+    wafPolicyName: stageWafPolicyName
+    logAnalyticsWorkspaceId: stageLogAnalyticsWorkspace.outputs.id
+    webAppName: stageWebApp.outputs.name
+  }
+}
+
+module prodFrontDoor 'modules/frontDoor.bicep' = if (prodDeploymentConfiguration == 'Web app with Azure Front Door') {
+  name: 'prodFrontDoorDeploy'
+  params: {
+    frontDoorName: prodFrontDoorName
+    wafPolicyName: prodWafPolicyName
+    logAnalyticsWorkspaceId: prodLogAnalyticsWorkspace.outputs.id
+    webAppName: prodWebApp.outputs.name
+  }
+}
 
 output devWebAppName string = devWebApp.outputs.name
+output stageWebAppName string = stageWebApp.outputs.name
+output prodWebAppName string = prodWebApp.outputs.name
 output devWebAppPrincipalId string = devWebApp.outputs.principalId
+output stageWebAppPrincipalId string = stageWebApp.outputs.principalId
+output prodWebAppPrincipalId string = prodWebApp.outputs.principalId
 output devWebAppHostName string = devWebApp.outputs.hostName
+output stageWebAppHostName string = stageWebApp.outputs.hostName
+output prodWebAppHostName string = prodWebApp.outputs.hostName
 
-var endpointHostName = (deploymentConfiguration == 'Web app with Azure Front Door') ? frontDoor.outputs.frontendEndpointHostName : cdnEndpoint.outputs.cdnEndpointHostName
 
-output endpointHostName string = endpointHostName
+var stageEndpointHostName = (stageDeploymentConfiguration == 'Web app with Azure Front Door') ? stageFrontDoor.outputs.frontendEndpointHostName : stageCdnEndpoint.outputs.cdnEndpointHostName
+
+output stageEndpointHostName string = stageEndpointHostName
 
 // TODO
 // var endpointHostName = (deploymentConfiguration == 'Web app with Azure Front Door') ? frontDoor.outputs.frontendEndpointHostName : cdnEndpoint.outputs.cdnEndpointHostName
