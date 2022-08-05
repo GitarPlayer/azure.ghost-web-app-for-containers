@@ -58,4 +58,3 @@ resource webAppSettings 'Microsoft.Web/sites/config@2021-01-15' = {
   }
 }
 
-

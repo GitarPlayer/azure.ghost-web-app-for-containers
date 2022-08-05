@@ -63,7 +63,7 @@
       "value": "Disabled"
     },
     "ghostContainerName": {
-      "value": "gitarplayer/ghost-az-ai:latest"
+      "value": "gitarplayer/ghost-az-ai"
     },
     "containerRegistryUrl": {
       "value": "https://index.docker.io/v1"

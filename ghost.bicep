@@ -101,6 +101,7 @@ param stageGhostContainerTag string = 'stage'
 @description('Ghost container full image name and tag')
 param prodGhostContainerTag string = 'prod'
 
+
 @description('Container registry where the image is hosted')
 param containerRegistryUrl string = 'https://index.docker.io/v1'
 
@@ -156,6 +157,11 @@ param stagePkgURL string = 'https://github.com/GitarPlayer/azure-function-ghost/
 param prodPkgURL string = 'https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip'
 
 
+param autoScaleMin string = '3'
+param autoScaleMax string = '3'
+param autoScaleDefault string = '3'
+param autoScaleCPUTreshold int = 70
+param scaleActionIncrease string = '3'
 // vars
 
 
@@ -169,6 +175,8 @@ var prodPrefix = 'prod'
 var devWebAppName = '${devPrefix}-${applicationNamePrefix}-web-${uniqueString(resourceGroup().id)}'
 var stageWebAppName = '${stagePrefix}-${applicationNamePrefix}-web-${uniqueString(resourceGroup().id)}'
 var prodWebAppName = '${prodPrefix}-${applicationNamePrefix}-web-${uniqueString(resourceGroup().id)}'
+var stageAutoScaleSettingName = '${stagePrefix}-${applicationNamePrefix}-scale-${uniqueString(resourceGroup().id)}'
+var prodAutoScaleSettingName = '${prodPrefix}-${applicationNamePrefix}-scale-${uniqueString(resourceGroup().id)}'
 var devFunctionName = '${devPrefix}-${applicationNamePrefix}-web-function-${uniqueString(resourceGroup().id)}'
 var stageFunctionName = '${stagePrefix}-${applicationNamePrefix}-web-function-${uniqueString(resourceGroup().id)}'
 var prodFunctionName = '${prodPrefix}-${applicationNamePrefix}-web-function-${uniqueString(resourceGroup().id)}'
@@ -506,6 +514,34 @@ module prodAppServicePlan './modules/appServicePlan.bicep' = {
   }
 }
 
+module stageWebAppAutoScaling './modules/webAppAutoScaling.bicep' = {
+  name: '${stagePrefix}appServiceAutoScale'
+  params: {
+    autoScaleSettingName: stageAutoScaleSettingName
+    appServicePlanId: stageAppServicePlan.outputs.id
+    location: location
+    scaleActionIncrease: scaleActionIncrease
+    autoScaleCPUTreshold: autoScaleCPUTreshold
+    autoScaleDefault: autoScaleDefault
+    autoScaleMax: autoScaleMax
+    autoScaleMin: autoScaleMin
+  }
+}
+
+module prodWebAppAutoScaling './modules/webAppAutoScaling.bicep' = {
+  name: '${prodPrefix}appServiceAutoScale'
+  params: {
+    autoScaleSettingName: prodAutoScaleSettingName
+    appServicePlanId: prodAppServicePlan.outputs.id
+    location: location
+    scaleActionIncrease: scaleActionIncrease
+    autoScaleCPUTreshold: autoScaleCPUTreshold
+    autoScaleDefault: autoScaleDefault
+    autoScaleMax: autoScaleMax
+    autoScaleMin: autoScaleMin
+  }
+}
+
 
 // devApplicationInsights
 module devApplicationInsights './modules/applicationInsights.bicep' = {
@@ -645,3 +681,6 @@ output stageEndpointHostName string = stageEndpointHostName
 // var endpointHostName = (deploymentConfiguration == 'Web app with Azure Front Door') ? frontDoor.outputs.frontendEndpointHostName : cdnEndpoint.outputs.cdnEndpointHostName
 
 // output endpointHostName string = endpointHostName
+
+
+
