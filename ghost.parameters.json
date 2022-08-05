@@ -2,6 +2,21 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "autoScaleMin": {
+      "value": "3"
+    },
+    "autoScaleMax": {
+      "value": "3"
+    },
+    "autoScaleDefault": {
+      "value": "3"
+    },
+    "autoScaleCPUTreshold": {
+      "value": 70
+    },
+    "scaleActionIncrease": {
+      "value": "3"
+    },
     "logAnalyticsWorkspaceSku": {
       "value": "PerGB2018"
     },

@@ -39,7 +39,7 @@ param containerMountPath string
   'Web app dev'
 ])
 param deploymentConfiguration string
-
+param containerRegistryUrl string
 
 var containerImageReference = 'DOCKER|${ghostContainerImage}:${ghostContainerTag}'
 
@@ -62,6 +62,18 @@ resource webApp 'Microsoft.Web/sites@2021-01-15' = {
         name: 'DOCKER_ENABLE_CI'
         value: 'true'
         }
+        {
+          name: 'DOCKER_CUSTOM_IMAGE_NAME'
+          value: '${ghostContainerImage}:${ghostContainerTag}'
+        }
+        {
+          name: 'DOCKER_REGISTRY_SERVER_URL'
+          value: containerRegistryUrl
+        }
+        {
+          name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
+          value: 'false'
+        } 
       ]
       http20Enabled: true
       httpLoggingEnabled: true

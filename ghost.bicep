@@ -337,6 +337,7 @@ module prodKeyVault './modules/keyVault.bicep' = {
 module devWebApp './modules/webApp.bicep' = {
   name: '${devPrefix}webAppDeploy'
   params: {
+    containerRegistryUrl: containerRegistryUrl
     webAppName: devWebAppName
     appServicePlanId: devAppServicePlan.outputs.id
     ghostContainerImage: ghostContainerName
@@ -354,6 +355,7 @@ module devWebApp './modules/webApp.bicep' = {
 module stageWebApp './modules/webApp.bicep' = {
   name: '${stagePrefix}WebAppDeploy'
   params: {
+    containerRegistryUrl: containerRegistryUrl
     webAppName: stageWebAppName
     appServicePlanId: stageAppServicePlan.outputs.id
     ghostContainerImage: ghostContainerName
@@ -371,6 +373,7 @@ module stageWebApp './modules/webApp.bicep' = {
 module prodWebApp './modules/webApp.bicep' = {
   name: '${prodPrefix}WebAppDeploy'
   params: {
+    containerRegistryUrl: containerRegistryUrl
     webAppName: prodWebAppName
     appServicePlanId: prodAppServicePlan.outputs.id
     ghostContainerImage: ghostContainerName
