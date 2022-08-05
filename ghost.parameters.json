@@ -2,14 +2,29 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "logAnalyticsWorkspaceSku": {
+      "value": "PerGB2018"
+    },
+    "devGhostContainerTag": {
+      "value": "latest"
+    },
+    "stageGhostContainerTag": {
+      "value": "stage"
+    },
+    "prodGhostContainerTag": {
+      "value": "prod"
+    },
+    "devDeploymentConfiguration": {
+      "value": "Web app dev"
+    },
     "devPkgURL": {
-      "value": "https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip"
+      "value": "https://github.com/GitarPlayer/azure-function-ghost/releases/download/0.0.9/app.zip"
     },
     "stagePkgURL": {
-      "value": "https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip"
+      "value": "https://github.com/GitarPlayer/azure-function-ghost/releases/download/0.0.9/app.zip"
     },
     "prodPkgURL": {
-      "value": "https://github.com/GitarPlayer/azure-function-ghost/archive/refs/tags/0.0.6.zip"
+      "value": "https://github.com/GitarPlayer/azure-function-ghost/releases/download/0.0.9/app.zip"
     },
     "storageAccountSku": {
       "value": "Standard_RAGRS"
@@ -24,22 +39,16 @@
       "value": "P3v2"
     },
     "devAppServicePlanSku": {
-      "value": "F1"
+      "value": "B1"
     },
     "devLogAnalyticsWorkspaceSku": {
-      "value": "PerGB2018"
-    },
-    "stageLogAnalyticsWorkspaceSku": {
-      "value": "PerGB2018"
-    },
-    "prodLogAnalyticsWorkspaceSku": {
       "value": "PerGB2018"
     },
     "mySQLServerSku": {
       "value": "Standard_D2ds_v4"
     },
     "devMySQLServerSku": {
-      "value": "B1s"
+      "value": "Standard_D2ds_v4"
     },
     "geoRedundantBackup": {
       "value": "Enabled"
@@ -54,7 +63,7 @@
       "value": "Disabled"
     },
     "ghostContainerName": {
-      "value": "andrewmatveychuk/ghost-ai:latest"
+      "value": "gitarplayer/ghost-az-ai:latest"
     },
     "containerRegistryUrl": {
       "value": "https://index.docker.io/v1"

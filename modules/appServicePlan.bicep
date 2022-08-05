@@ -5,8 +5,13 @@ targetScope = 'resourceGroup'
 @maxLength(40)
 param appServicePlanName string
 
+
+param zoneRedundant bool
+
+
 @description('App Service Plan pricing tier')
 @allowed([
+  'F1'
   'B1'
   'B2'
   'B3'
@@ -31,7 +36,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   kind: 'linux'
   properties: {
     reserved: true
-    zoneRedundant: true
+    zoneRedundant: zoneRedundant
   }
   sku: {
     name: appServicePlanSku
@@ -56,57 +61,57 @@ output id string = appServicePlan.id
 
 
 
-resource ghostaspzuebgtmgleAutoscale 'Microsoft.Insights/autoscalesettings@2021-05-01-preview' = {
-  name: 'ghost-asp-z6uebgtm2gle6-Autoscale-780'
-  location: 'West Europe'
-  properties: {
-    profiles: [
-      {
-        name: 'Auto created scale condition'
-        capacity: {
-          minimum: '1'
-          maximum: '10'
-          default: '3'
-        }
-        rules: [
-          {
-            metricTrigger: {
-              metricName: 'CpuPercentage'
-              metricNamespace: 'microsoft.web/serverfarms'
-              metricResourceUri: '/subscriptions/2221643b-928c-42a5-a96d-b56de5a8d6d8/resourceGroups/withouthAnd/providers/Microsoft.Web/serverFarms/ghost-asp-z6uebgtm2gle6'
-              timeGrain: 'PT1M'
-              statistic: 'Average'
-              timeWindow: 'PT5M'
-              timeAggregation: 'Average'
-              operator: 'GreaterThan'
-              threshold: '70.0'
-              dimensions: [
-                {
-                  DimensionName: 'Instance'
-                  Operator: 'Equals'
-                  Values: [
-                    'pl0ldlwk0001X5'
-                  ]
-                }
-              ]
-              dividePerInstance: false
-            }
-            scaleAction: {
-              direction: 'Increase'
-              type: 'ChangeCount'
-              value: '3'
-              cooldown: 'PT5M'
-            }
-          }
-        ]
-      }
-    ]
-    enabled: true
-    name: 'ghost-asp-z6uebgtm2gle6-Autoscale-780'
-    targetResourceUri: '/subscriptions/2221643b-928c-42a5-a96d-b56de5a8d6d8/resourceGroups/withouthAnd/providers/Microsoft.Web/serverfarms/ghost-asp-z6uebgtm2gle6'
-    notifications: []
-    predictiveAutoscalePolicy: {
-      scaleMode: 'Disabled'
-    }
-  }
-}
+// resource autoScaleSetting 'Microsoft.Insights/autoscalesettings@2021-05-01-preview' = {
+//   name: 'ghost-asp-z6uebgtm2gle6-Autoscale-780'
+//   location: location
+//   properties: {
+//     profiles: [
+//       {
+//         name: 'Auto created scale condition'
+//         capacity: {
+//           minimum: '3'
+//           maximum: '10'
+//           default: '3'
+//         }
+//         rules: [
+//           {
+//             metricTrigger: {
+//               metricName: 'CpuPercentage'
+//               metricNamespace: 'microsoft.web/serverfarms'
+//               metricResourceUri: '/subscriptions/2221643b-928c-42a5-a96d-b56de5a8d6d8/resourceGroups/withouthAnd/providers/Microsoft.Web/serverFarms/ghost-asp-z6uebgtm2gle6'
+//               timeGrain: 'PT1M'
+//               statistic: 'Average'
+//               timeWindow: 'PT5M'
+//               timeAggregation: 'Average'
+//               operator: 'GreaterThan'
+//               threshold: '70.0'
+//               dimensions: [
+//                 {
+//                   DimensionName: 'Instance'
+//                   Operator: 'Equals'
+//                   Values: [
+//                     'pl0ldlwk0001X5'
+//                   ]
+//                 }
+//               ]
+//               dividePerInstance: false
+//             }
+//             scaleAction: {
+//               direction: 'Increase'
+//               type: 'ChangeCount'
+//               value: '3'
+//               cooldown: 'PT5M'
+//             }
+//           }
+//         ]
+//       }
+//     ]
+//     enabled: true
+//     name: 'ghost-asp-z6uebgtm2gle6-Autoscale-780'
+//     targetResourceUri: '/subscriptions/2221643b-928c-42a5-a96d-b56de5a8d6d8/resourceGroups/withouthAnd/providers/Microsoft.Web/serverfarms/ghost-asp-z6uebgtm2gle6'
+//     notifications: []
+//     predictiveAutoscalePolicy: {
+//       scaleMode: 'Disabled'
+//     }
+//   }
+// }

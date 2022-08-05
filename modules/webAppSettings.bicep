@@ -41,6 +41,7 @@ resource webAppSettings 'Microsoft.Web/sites/config@2021-01-15' = {
     XDT_MicrosoftApplicationInsights_Mode: 'default'
     WEBSITES_ENABLE_APP_SERVICE_STORAGE: 'false'
     DOCKER_REGISTRY_SERVER_URL: containerRegistryUrl
+    
     // Ghost-specific settings
     NODE_ENV: 'production'
     GHOST_CONTENT: containerMountPath

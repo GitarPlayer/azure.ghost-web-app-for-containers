@@ -5,8 +5,11 @@ targetScope = 'resourceGroup'
 param mySQLServerName string
 
 @allowed([
-  'Standard_B16ms'
+  'Standard_B1s'
+  'Standard_B1ms'
+  'Standard_B2s'
   'Standard_D2ds_v4'
+  'Standard_E8ds_v4'
 ])
 param mySQLServerSku string
 

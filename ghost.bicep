@@ -184,12 +184,12 @@ var prodApplicationInsightsName = '${prodPrefix}-${applicationNamePrefix}-ai-${u
 var devApplicationInsightsNameFunction = '${devPrefix}-${applicationNamePrefix}-ai-function-${uniqueString(resourceGroup().id)}'
 var stageApplicationInsightsNameFunction = '${stagePrefix}-${applicationNamePrefix}-ai-function-${uniqueString(resourceGroup().id)}'
 var prodApplicationInsightsNameFunction = '${prodPrefix}-${applicationNamePrefix}-ai-function-${uniqueString(resourceGroup().id)}'
-var devKeyVaultName = '${devPrefix}-${applicationNamePrefix}-kv-${uniqueString(resourceGroup().id)}'
-var stageKeyVaultName = '${stagePrefix}-${applicationNamePrefix}-kv-${uniqueString(resourceGroup().id)}'
-var prodKeyVaultName = '${prodPrefix}-${applicationNamePrefix}-kv-${uniqueString(resourceGroup().id)}'
-var devStorageAccountName = '${devPrefix}-${applicationNamePrefix}stor${uniqueString(resourceGroup().id)}'
-var stageStorageAccountName = '${stagePrefix}-${applicationNamePrefix}stor${uniqueString(resourceGroup().id)}'
-var prodStorageAccountName = '${prodPrefix}-${applicationNamePrefix}stor${uniqueString(resourceGroup().id)}'
+var devKeyVaultName = '${devPrefix}-kv-${uniqueString(resourceGroup().id)}'
+var stageKeyVaultName = '${stagePrefix}-kv-${uniqueString(resourceGroup().id)}'
+var prodKeyVaultName = '${prodPrefix}-kv-${uniqueString(resourceGroup().id)}'
+var devStorageAccountName = '${devPrefix}stor${uniqueString(resourceGroup().id)}'
+var stageStorageAccountName = '${stagePrefix}stor${uniqueString(resourceGroup().id)}'
+var prodStorageAccountName = '${prodPrefix}stor${uniqueString(resourceGroup().id)}'
 var devMySQLServerName = '${devPrefix}-${applicationNamePrefix}-mysql-${uniqueString(resourceGroup().id)}'
 var stageMySQLServerName = '${stagePrefix}-${applicationNamePrefix}-mysql-${uniqueString(resourceGroup().id)}'
 var prodMySQLServerName = '${prodPrefix}-${applicationNamePrefix}-mysql-${uniqueString(resourceGroup().id)}'
@@ -201,6 +201,7 @@ var devGhostContentFileShareName = '${devPrefix}-contentfiles'
 var stageGhostContentFileShareName = '${stagePrefix}-contentfiles'
 var prodGhostContentFileShareName = '${prodPrefix}-contentfiles'
 var ghostContentFilesMountPath = '/var/lib/ghost/content_files'
+
 var stageSiteUrl = (stageDeploymentConfiguration == 'Web app with Azure Front Door') ? 'https://${stageFrontDoorName}.azurefd.net' : 'https://${stageCdnEndpointName}.azureedge.net'
 var prodSiteUrl = (prodDeploymentConfiguration == 'Web app with Azure Front Door') ? 'https://${prodFrontDoorName}.azurefd.net' : 'https://${prodCdnEndpointName}.azureedge.net'
 
@@ -219,9 +220,9 @@ var cdnProfileSku = {
 
 //Web app with Azure Front Door
 var stageFrontDoorName = '${stagePrefix}-${applicationNamePrefix}-fd-${uniqueString(resourceGroup().id)}'
-var stageWafPolicyName = '${stagePrefix}-${applicationNamePrefix}waf${uniqueString(resourceGroup().id)}'
 var prodFrontDoorName = '${prodPrefix}-${applicationNamePrefix}-fd-${uniqueString(resourceGroup().id)}'
-var prodWafPolicyName = '${prodPrefix}-${applicationNamePrefix}waf${uniqueString(resourceGroup().id)}'
+var stageWafPolicyName = '${stagePrefix}${applicationNamePrefix}waf${uniqueString(resourceGroup().id)}'
+var prodWafPolicyName = '${prodPrefix}${applicationNamePrefix}waf${uniqueString(resourceGroup().id)}'
 
 module devLogAnalyticsWorkspace './modules/logAnalyticsWorkspace.bicep' = {
   name: 'devLogAnalyticsWorkspaceDeploy'
@@ -435,7 +436,7 @@ module devWebAppSettings 'modules/webAppSettings.bicep' = {
     databaseLogin: databaseLogin
     databasePasswordSecretUri: devKeyVault.outputs.databasePasswordSecretUri
     databaseName: databaseName
-    siteUrl: 'devSiteUrl'
+    siteUrl: 'https://${devWebApp.outputs.hostName}'
   }
 }
 
@@ -479,6 +480,7 @@ module devAppServicePlan './modules/appServicePlan.bicep' = {
     appServicePlanSku: devAppServicePlanSku
     location: location
     logAnalyticsWorkspaceId: devLogAnalyticsWorkspace.outputs.id
+    zoneRedundant: false
   }
 }
 
@@ -489,6 +491,7 @@ module stageAppServicePlan './modules/appServicePlan.bicep' = {
     appServicePlanSku: appServicePlanSku
     location: location
     logAnalyticsWorkspaceId: stageLogAnalyticsWorkspace.outputs.id
+    zoneRedundant: true
   }
 }
 
@@ -499,6 +502,7 @@ module prodAppServicePlan './modules/appServicePlan.bicep' = {
     appServicePlanSku: appServicePlanSku
     location: location
     logAnalyticsWorkspaceId: prodLogAnalyticsWorkspace.outputs.id
+    zoneRedundant: true
   }
 }
 

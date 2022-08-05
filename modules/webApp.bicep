@@ -57,6 +57,12 @@ resource webApp 'Microsoft.Web/sites@2021-01-15' = {
     enabled: true
     reserved: true
     siteConfig: {
+      appSettings: [
+        {
+        name: 'DOCKER_ENABLE_CI'
+        value: 'true'
+        }
+      ]
       http20Enabled: true
       httpLoggingEnabled: true
       minTlsVersion: '1.2'
@@ -144,4 +150,8 @@ resource webAppDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-pre
 output name string = webApp.name
 output hostName string = webApp.properties.hostNames[0]
 output principalId string = webApp.identity.principalId
+
+
+
+
 
